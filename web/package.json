@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "rspack serve",
-    "build": "rspack build"
+    "build": "rspack build",
+    "lint": "npx eslint src && npx prettier . --write"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -14,6 +15,10 @@
     "@rspack/cli": "latest",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.1",
+    "@typescript-eslint/eslint-plugin": "^6.8.0",
+    "@typescript-eslint/parser": "^6.8.0",
+    "eslint": "^8.51.0",
+    "eslint-plugin-react": "^7.33.2",
     "prettier": "3.0.3",
     "typescript": "^5.0.4"
   }
