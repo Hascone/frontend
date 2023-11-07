@@ -1,8 +1,10 @@
 use axum::{http::StatusCode, Extension, Json};
 use serde::{Deserialize, Serialize};
+use tokio_tungstenite::tungstenite::Message;
 
 use crate::{
     http_app::CurrentUser,
+    sockets::broadcast_to_lobby,
     state::lobby::{Lobby, LobbyState, LOBBIES},
 };
 
@@ -47,6 +49,13 @@ pub(crate) async fn join_lobby(
     }
 
     lobby.user_ids.push(current_user.user_id.clone());
+    broadcast_to_lobby(
+        &lobby,
+        Some(&current_user.user_id),
+        // TODO: Make an actual websocket message. Like in JSON.
+        Message::Text("Lobby joined".to_owned()),
+    );
+
     Ok(StatusCode::OK)
 }
 
