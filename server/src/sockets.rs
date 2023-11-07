@@ -57,3 +57,11 @@ pub async fn handle_connection(stream: TcpStream, addr: SocketAddr) {
     println!("{} disconnected", addr);
     CONNECTIONS.lock().unwrap().remove(&addr.to_string());
 }
+
+pub fn send_message(user_id: &str, message: String) {
+    CONNECTIONS
+        .lock()
+        .unwrap()
+        .get(user_id)
+        .map(|tx| tx.send(Message::Text(message)).unwrap());
+}
