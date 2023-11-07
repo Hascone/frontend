@@ -1,36 +1,38 @@
-use axum::{
-    routing::{get, post},
-    http::StatusCode,
-    Json, Router,
-};
+#[macro_use]
+extern crate lazy_static;
+
+mod http_app;
+mod routes;
+mod sockets;
+
+use axum::{http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use tokio::net::TcpListener;
 
-#[tokio::main]
-async fn main() {
-    // initialize tracing
-    tracing_subscriber::fmt::init();
-
-    // build our application with a route
-    let app = Router::new()
-        // `GET /` goes to `root`
-        .route("/", get(root))
-        // `POST /users` goes to `create_user`
-        .route("/users", post(create_user));
-
-    // run our app with hyper
-    // `axum::Server` is a re-export of `hyper::Server`
+async fn setup_http() {
+    let app = http_app::create_http_app();
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::debug!("listening on {}", addr);
+
+    println!("Spinning up HTTP server");
+
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
-        .unwrap();
+        .expect("Failed to find HTTP server.");
 }
 
-// basic handler that responds with a static string
-async fn root() -> &'static str {
-    "Hello, World!"
+async fn setup_ws() {
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3030));
+    let socket = TcpListener::bind(&addr)
+        .await
+        .expect("Failed to bind websocket.");
+
+    println!("Spinning up Websocket server");
+
+    while let Ok((stream, addr)) = socket.accept().await {
+        tokio::spawn(sockets::handle_connection(stream, addr));
+    }
 }
 
 async fn create_user(
@@ -60,4 +62,12 @@ struct CreateUser {
 struct User {
     id: u64,
     username: String,
+}
+
+#[tokio::main]
+async fn main() {
+    // initialize tracing
+    tracing_subscriber::fmt::init();
+
+    tokio::join!(setup_http(), setup_ws());
 }
